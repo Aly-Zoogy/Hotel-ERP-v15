@@ -1,0 +1,46 @@
+{
+    "actions": [],
+    "creation": "2025-01-01 00:00:00.000000",
+    "doctype": "DocType",
+    "engine": "InnoDB",
+    "field_order": [
+        "max_nights_per_reservation",
+        "max_reservation_amount"
+    ],
+    "fields": [
+        {
+            "fieldname": "max_nights_per_reservation",
+            "fieldtype": "Int",
+            "label": "Max Nights Per Reservation",
+            "default": "90"
+        },
+        {
+            "fieldname": "max_reservation_amount",
+            "fieldtype": "Currency",
+            "label": "Max Reservation Amount",
+            "default": "1000000"
+        }
+    ],
+    "issingle": 1,
+    "links": [],
+    "modified": "2025-01-01 00:00:00.000000",
+    "modified_by": "Administrator",
+    "module": "Hotel Management",
+    "name": "Hotel Settings",
+    "owner": "Administrator",
+    "permissions": [
+        {
+            "create": 1,
+            "delete": 1,
+            "email": 1,
+            "print": 1,
+            "read": 1,
+            "role": "System Manager",
+            "share": 1,
+            "write": 1
+        }
+    ],
+    "sort_field": "modified",
+    "sort_order": "DESC",
+    "states": []
+}
