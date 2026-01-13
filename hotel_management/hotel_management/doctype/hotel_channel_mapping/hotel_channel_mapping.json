@@ -1,0 +1,97 @@
+{
+    "actions": [],
+    "allow_rename": 1,
+    "autoname": "format:{channel}-{unit_type}",
+    "creation": "2026-01-03 13:00:00.000000",
+    "doctype": "DocType",
+    "editable_grid": 1,
+    "engine": "InnoDB",
+    "field_order": [
+        "channel",
+        "unit_type",
+        "rate_plan",
+        "column_break_1",
+        "remote_unit_id",
+        "remote_rate_id",
+        "sync_enabled"
+    ],
+    "fields": [
+        {
+            "fieldname": "channel",
+            "fieldtype": "Link",
+            "label": "Channel",
+            "options": "Hotel Channel",
+            "reqd": 1
+        },
+        {
+            "fieldname": "unit_type",
+            "fieldtype": "Link",
+            "label": "Unit Type",
+            "options": "Unit Type",
+            "reqd": 1
+        },
+        {
+            "fieldname": "rate_plan",
+            "fieldtype": "Link",
+            "label": "Rate Plan",
+            "options": "Rate Plan"
+        },
+        {
+            "fieldname": "column_break_1",
+            "fieldtype": "Column Break"
+        },
+        {
+            "fieldname": "remote_unit_id",
+            "fieldtype": "Data",
+            "label": "Remote Unit/Room ID",
+            "reqd": 1
+        },
+        {
+            "fieldname": "remote_rate_id",
+            "fieldtype": "Data",
+            "label": "Remote Rate ID"
+        },
+        {
+            "fieldname": "sync_enabled",
+            "fieldtype": "Check",
+            "label": "Sync Enabled",
+            "default": "1"
+        }
+    ],
+    "index_web_pages_for_search": 1,
+    "links": [],
+    "modified": "2026-01-03 13:00:00.000000",
+    "modified_by": "Administrator",
+    "module": "Hotel Management",
+    "name": "Hotel Channel Mapping",
+    "owner": "Administrator",
+    "permissions": [
+        {
+            "create": 1,
+            "delete": 1,
+            "email": 1,
+            "export": 1,
+            "print": 1,
+            "read": 1,
+            "report": 1,
+            "role": "System Manager",
+            "share": 1,
+            "write": 1
+        },
+        {
+            "create": 1,
+            "delete": 1,
+            "email": 1,
+            "export": 1,
+            "print": 1,
+            "read": 1,
+            "report": 1,
+            "role": "Hotel Manager",
+            "share": 1,
+            "write": 1
+        }
+    ],
+    "sort_field": "modified",
+    "sort_order": "DESC",
+    "states": []
+}

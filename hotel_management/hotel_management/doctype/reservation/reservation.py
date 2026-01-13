@@ -7,6 +7,7 @@ import frappe
 from frappe.model.document import Document
 from frappe import _
 from frappe.utils import date_diff, flt, getdate, today
+from hotel_management.hotel_management.pricing import get_dynamic_price
 
 class Reservation(Document):
 	def validate(self):
@@ -17,6 +18,7 @@ class Reservation(Document):
 		self.calculate_nights()
 		self.validate_units_availability()
 		self.apply_rate_plan()
+		self.apply_dynamic_pricing()
 		self.calculate_total_amount()
 		self.validate_total_amount()
 	
@@ -77,10 +79,10 @@ class Reservation(Document):
 			frappe.throw(_("Guest {0} must have a name").format(self.primary_guest))
 		
 		# Validate contact information
-		if not guest.email and not guest.mobile:
+		if not guest.email and not guest.phone:
 			frappe.msgprint(
-				_("Warning: Guest {0} has no email or mobile number. This may cause issues with notifications.")
-				.format(guest.full_name),
+				_("Warning: Guest {0} has no email or phone number. This may cause issues with notifications.")
+				.format(guest.guest_name),
 				indicator="orange"
 			)
 	
@@ -147,28 +149,38 @@ class Reservation(Document):
 		return len(overlapping) == 0
 	
 	def apply_rate_plan(self):
-		"""Apply rate plan to units if specified"""
-		if not self.rate_plan:
-			return
-		
-		# Get rate plan details
-		rate_plan = frappe.get_doc("Rate Plan", self.rate_plan)
-		
+		"""Apply rate plan to units or fallback to default rate"""
 		for unit in self.units_reserved:
 			if not unit.rate_per_night or unit.rate_per_night == 0:
-				# Get unit type
+				rate = None
 				unit_type = frappe.db.get_value("Property Unit", unit.unit, "unit_type")
+
+				if self.rate_plan:
+					# Get rate plan details
+					rate_plan = frappe.get_doc("Rate Plan", self.rate_plan)
+					# Try to get rate from rate plan
+					rate = self.get_rate_from_plan(rate_plan, unit_type, unit.check_in or self.check_in)
 				
-				# Try to get rate from rate plan
-				rate = self.get_rate_from_plan(rate_plan, unit_type, unit.check_in or self.check_in)
+				if not rate:
+					# Fallback to unit's default rate
+					rate = frappe.db.get_value("Property Unit", unit.unit, "rate_per_night")
 				
 				if rate:
 					unit.rate_per_night = rate
-				else:
-					# Fallback to unit's default rate
-					default_rate = frappe.db.get_value("Property Unit", unit.unit, "rate_per_night")
-					if default_rate:
-						unit.rate_per_night = default_rate
+	
+	def apply_dynamic_pricing(self):
+		"""Apply dynamic pricing rules to units"""
+		for unit in self.units_reserved:
+			# Only apply if rate is not zero and not manually locked (future feature)
+			if unit.rate_per_night:
+				dynamic_rate = get_dynamic_price(
+					self, 
+					unit.unit, 
+					unit.check_in or self.check_in, 
+					unit.check_out or self.check_out, 
+					unit.rate_per_night
+				)
+				unit.rate_per_night = dynamic_rate
 	
 	def get_rate_from_plan(self, rate_plan, unit_type, date):
 		"""Get rate from rate plan for specific unit type and date"""

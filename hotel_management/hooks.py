@@ -38,6 +38,9 @@ scheduler_events = {
 	# Alternative: Run daily check (more flexible)
 	"daily": [
 		"hotel_management.hotel_management.doctype.owner_settlement.owner_settlement.check_and_generate_settlements"
+	],
+	"hourly": [
+		"hotel_management.hotel_management.channel_manager.channel_manager.sync_all_channels"
 	]
 }
 

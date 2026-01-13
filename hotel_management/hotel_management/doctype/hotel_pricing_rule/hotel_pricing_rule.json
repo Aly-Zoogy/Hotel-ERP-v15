@@ -1,0 +1,163 @@
+{
+    "actions": [],
+    "allow_rename": 1,
+    "autoname": "format:PR-{#####}",
+    "creation": "2026-01-03 13:00:00.000000",
+    "doctype": "DocType",
+    "editable_grid": 1,
+    "engine": "InnoDB",
+    "field_order": [
+        "rule_name",
+        "priority",
+        "apply_on",
+        "rate_plan",
+        "unit_type",
+        "column_break_1",
+        "season",
+        "special_event",
+        "min_occupancy",
+        "max_occupancy",
+        "min_days_advance",
+        "max_days_advance",
+        "min_stay",
+        "section_break_action",
+        "action",
+        "value"
+    ],
+    "fields": [
+        {
+            "fieldname": "rule_name",
+            "fieldtype": "Data",
+            "label": "Rule Name",
+            "reqd": 1
+        },
+        {
+            "fieldname": "priority",
+            "fieldtype": "Int",
+            "label": "Priority",
+            "default": "0",
+            "description": "Higher priority rules are applied first."
+        },
+        {
+            "fieldname": "apply_on",
+            "fieldtype": "Select",
+            "label": "Apply On",
+            "options": "Season\nOccupancy\nSpecial Event\nEarly Bird\nLast Minute\nLength of Stay",
+            "reqd": 1
+        },
+        {
+            "fieldname": "rate_plan",
+            "fieldtype": "Link",
+            "label": "Rate Plan",
+            "options": "Rate Plan"
+        },
+        {
+            "fieldname": "unit_type",
+            "fieldtype": "Link",
+            "label": "Unit Type",
+            "options": "Unit Type"
+        },
+        {
+            "fieldname": "column_break_1",
+            "fieldtype": "Column Break"
+        },
+        {
+            "fieldname": "season",
+            "fieldtype": "Link",
+            "label": "Season",
+            "options": "Hotel Season",
+            "depends_on": "eval:doc.apply_on=='Season'"
+        },
+        {
+            "fieldname": "special_event",
+            "fieldtype": "Link",
+            "label": "Special Event",
+            "options": "Hotel Special Event",
+            "depends_on": "eval:doc.apply_on=='Special Event'"
+        },
+        {
+            "fieldname": "min_occupancy",
+            "fieldtype": "Percent",
+            "label": "Min Occupancy",
+            "depends_on": "eval:doc.apply_on=='Occupancy'"
+        },
+        {
+            "fieldname": "max_occupancy",
+            "fieldtype": "Percent",
+            "label": "Max Occupancy",
+            "depends_on": "eval:doc.apply_on=='Occupancy'"
+        },
+        {
+            "fieldname": "min_days_advance",
+            "fieldtype": "Int",
+            "label": "Min Days Advance",
+            "depends_on": "eval:doc.apply_on=='Early Bird'"
+        },
+        {
+            "fieldname": "max_days_advance",
+            "fieldtype": "Int",
+            "label": "Max Days Advance",
+            "depends_on": "eval:doc.apply_on=='Last Minute'"
+        },
+        {
+            "fieldname": "min_stay",
+            "fieldtype": "Int",
+            "label": "Min Stay (Nights)",
+            "depends_on": "eval:doc.apply_on=='Length of Stay'"
+        },
+        {
+            "fieldname": "section_break_action",
+            "fieldtype": "Section Break",
+            "label": "Action"
+        },
+        {
+            "fieldname": "action",
+            "fieldtype": "Select",
+            "label": "Action",
+            "options": "Discount Percentage\nDiscount Amount\nMarkup Percentage\nMarkup Amount\nSet Fixed Price",
+            "reqd": 1
+        },
+        {
+            "fieldname": "value",
+            "fieldtype": "Float",
+            "label": "Value",
+            "reqd": 1
+        }
+    ],
+    "index_web_pages_for_search": 1,
+    "links": [],
+    "modified": "2026-01-03 13:00:00.000000",
+    "modified_by": "Administrator",
+    "module": "Hotel Management",
+    "name": "Hotel Pricing Rule",
+    "owner": "Administrator",
+    "permissions": [
+        {
+            "create": 1,
+            "delete": 1,
+            "email": 1,
+            "export": 1,
+            "print": 1,
+            "read": 1,
+            "report": 1,
+            "role": "System Manager",
+            "share": 1,
+            "write": 1
+        },
+        {
+            "create": 1,
+            "delete": 1,
+            "email": 1,
+            "export": 1,
+            "print": 1,
+            "read": 1,
+            "report": 1,
+            "role": "Hotel Manager",
+            "share": 1,
+            "write": 1
+        }
+    ],
+    "sort_field": "priority",
+    "sort_order": "DESC",
+    "states": []
+}

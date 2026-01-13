@@ -1,0 +1,85 @@
+{
+    "actions": [],
+    "allow_rename": 1,
+    "autoname": "field:season_name",
+    "creation": "2026-01-03 13:00:00.000000",
+    "doctype": "DocType",
+    "editable_grid": 1,
+    "engine": "InnoDB",
+    "field_order": [
+        "season_name",
+        "season_type",
+        "column_break_1",
+        "start_date",
+        "end_date"
+    ],
+    "fields": [
+        {
+            "fieldname": "season_name",
+            "fieldtype": "Data",
+            "label": "Season Name",
+            "unique": 1,
+            "reqd": 1
+        },
+        {
+            "fieldname": "season_type",
+            "fieldtype": "Select",
+            "label": "Season Type",
+            "options": "High\nMid\nLow",
+            "default": "Mid",
+            "reqd": 1
+        },
+        {
+            "fieldname": "column_break_1",
+            "fieldtype": "Column Break"
+        },
+        {
+            "fieldname": "start_date",
+            "fieldtype": "Date",
+            "label": "Start Date",
+            "reqd": 1
+        },
+        {
+            "fieldname": "end_date",
+            "fieldtype": "Date",
+            "label": "End Date",
+            "reqd": 1
+        }
+    ],
+    "index_web_pages_for_search": 1,
+    "links": [],
+    "modified": "2026-01-03 13:00:00.000000",
+    "modified_by": "Administrator",
+    "module": "Hotel Management",
+    "name": "Hotel Season",
+    "owner": "Administrator",
+    "permissions": [
+        {
+            "create": 1,
+            "delete": 1,
+            "email": 1,
+            "export": 1,
+            "print": 1,
+            "read": 1,
+            "report": 1,
+            "role": "System Manager",
+            "share": 1,
+            "write": 1
+        },
+        {
+            "create": 1,
+            "delete": 1,
+            "email": 1,
+            "export": 1,
+            "print": 1,
+            "read": 1,
+            "report": 1,
+            "role": "Hotel Manager",
+            "share": 1,
+            "write": 1
+        }
+    ],
+    "sort_field": "modified",
+    "sort_order": "DESC",
+    "states": []
+}
