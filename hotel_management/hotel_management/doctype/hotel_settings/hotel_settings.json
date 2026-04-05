@@ -5,7 +5,12 @@
     "engine": "InnoDB",
     "field_order": [
         "max_nights_per_reservation",
-        "max_reservation_amount"
+        "max_reservation_amount",
+        "section_break_deposits",
+        "deposit_required",
+        "deposit_percentage",
+        "section_break_cancellation",
+        "default_cancellation_policy"
     ],
     "fields": [
         {
@@ -19,6 +24,34 @@
             "fieldtype": "Currency",
             "label": "Max Reservation Amount",
             "default": "1000000"
+        },
+        {
+            "fieldname": "section_break_deposits",
+            "fieldtype": "Section Break",
+            "label": "Deposit Settings"
+        },
+        {
+            "fieldname": "deposit_required",
+            "fieldtype": "Check",
+            "label": "Deposit Required",
+            "default": "0"
+        },
+        {
+            "fieldname": "deposit_percentage",
+            "fieldtype": "Percent",
+            "label": "Deposit Percentage",
+            "default": "25"
+        },
+        {
+            "fieldname": "section_break_cancellation",
+            "fieldtype": "Section Break",
+            "label": "Cancellation Settings"
+        },
+        {
+            "fieldname": "default_cancellation_policy",
+            "fieldtype": "Link",
+            "label": "Default Cancellation Policy",
+            "options": "Hotel Cancellation Policy"
         }
     ],
     "issingle": 1,

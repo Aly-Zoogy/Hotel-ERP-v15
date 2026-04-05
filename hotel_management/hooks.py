@@ -23,6 +23,15 @@ fixtures = [
 doc_events = {
 	"Reservation": {
 		"on_update_after_submit": "hotel_management.hotel_management.doctype.guest.guest.update_guest_statistics"
+	},
+	"Sales Invoice": {
+		"on_submit": "hotel_management.hotel_management.doctype.reservation.reservation.sync_from_invoice",
+		"on_cancel": "hotel_management.hotel_management.doctype.reservation.reservation.sync_from_invoice",
+		"on_update_after_submit": "hotel_management.hotel_management.doctype.reservation.reservation.sync_from_invoice"
+	},
+	"Payment Entry": {
+		"on_submit": "hotel_management.hotel_management.doctype.reservation.reservation.sync_from_payment",
+		"on_cancel": "hotel_management.hotel_management.doctype.reservation.reservation.sync_from_payment"
 	}
 }
 
@@ -65,8 +74,5 @@ after_install = "hotel_management.install.after_install"
 # App JS
 # ------
 app_include_js = [
-    # "/assets/hotel_management/js/dashboard_widgets.js"
-	# إضافة الملفات الجديدة
-    # "/assets/hotel_management/js/reservation_enhanced.js",
-    # "/assets/hotel_management/js/property_unit_enhanced.js"
+    "/assets/hotel_management/hotel_management/doctype/reservation/reservation_enhanced.js"
 ]

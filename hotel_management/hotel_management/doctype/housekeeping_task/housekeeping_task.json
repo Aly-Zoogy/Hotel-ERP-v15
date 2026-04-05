@@ -11,6 +11,7 @@
   "task_type",
   "priority",
   "column_break_1",
+  "reservation",
   "scheduled_date",
   "assigned_to",
   "status",
@@ -53,6 +54,13 @@
   {
    "fieldname": "column_break_1",
    "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "reservation",
+   "fieldtype": "Link",
+   "label": "Reservation",
+   "options": "Reservation",
+   "read_only": 1
   },
   {
    "fieldname": "scheduled_date",
@@ -119,7 +127,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-11-16 00:00:00.000000",
+ "modified": "2026-02-27 15:00:00.000000",
  "modified_by": "Administrator",
  "module": "Hotel Management",
  "name": "Housekeeping Task",

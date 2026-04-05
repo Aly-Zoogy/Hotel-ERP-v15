@@ -55,6 +55,7 @@ def get_calendar_events(start, end):
             "id": b.reservation_id,
             "resourceId": b.unit,
             "display_label": label_name,
+            "guest_name": b.guest_name or b.customer_name,
             "start": str(b.check_in),
             "end": str(b.check_out),
             "custom_class": status_map.get(b.status, "booked"),
@@ -68,6 +69,6 @@ def get_calendar_events(start, end):
 def get_units():
     """Fetch all units for row headers"""
     return frappe.get_all("Property Unit", 
-        fields=["name", "unit_id", "unit_type"],
+        fields=["name", "unit_id", "unit_type", "floor"],
         order_by="unit_id asc"
     )

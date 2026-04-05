@@ -50,12 +50,29 @@ class HotelCalendar {
 			// Manual UI injection to avoid template errors
 			let html = `
 				<div class="hotel-calendar-wrapper" style="padding: 10px;">
-					<div class="calendar-controls" style="margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;">
-						<div class="view-modes btn-group flex">
-							<button class="btn btn-default btn-xs" data-view="Day">Day</button>
-							<button class="btn btn-default btn-xs" data-view="Week">Week</button>
-							<button class="btn btn-default btn-xs" data-view="Month">Month</button>
+					<div class="calendar-controls" style="margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
+						<div class="view-modes-navigation flex" style="gap: 15px;">
+							<div class="btn-group">
+								<button class="btn btn-default btn-xs" data-view="Day">Day</button>
+								<button class="btn btn-default btn-xs" data-view="Week">Week</button>
+								<button class="btn btn-default btn-xs" data-view="Month">Month</button>
+							</div>
+							<div class="btn-group">
+								<button class="btn btn-default btn-xs nav-btn" data-action="prev"><i class="fa fa-chevron-left"></i></button>
+								<button class="btn btn-default btn-xs nav-btn" data-action="today">Today</button>
+								<button class="btn btn-default btn-xs nav-btn" data-action="next"><i class="fa fa-chevron-right"></i></button>
+							</div>
 						</div>
+						
+						<div class="calendar-filters flex" style="gap: 10px; align-items: center;">
+							<select id="filter-unit-type" class="form-control input-xs" style="width: 120px;">
+								<option value="">All Types</option>
+							</select>
+							<select id="filter-floor" class="form-control input-xs" style="width: 100px;">
+								<option value="">All Floors</option>
+							</select>
+						</div>
+
 						<div class="calendar-legend flex" style="gap: 10px;">
 							<div style="display: flex; align-items: center; gap: 5px;">
 								<span style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: #2ecc71;"></span>
@@ -93,8 +110,20 @@ class HotelCalendar {
 
 	bind_events() {
 		let me = this;
-		this.wrapper.on('click', '.view-modes button', function () {
+		this.wrapper.on('click', '.view-modes-navigation button[data-view]', function () {
 			me.view_mode = $(this).data('view');
+			me.render_grid();
+		});
+
+		this.wrapper.on('click', '.nav-btn', function () {
+			let action = $(this).data('action');
+			if (action === 'today') me.start_date = frappe.datetime.add_days(frappe.datetime.get_today(), -2);
+			if (action === 'prev') me.start_date = frappe.datetime.add_days(me.start_date, -7);
+			if (action === 'next') me.start_date = frappe.datetime.add_days(me.start_date, 7);
+			me.render_grid();
+		});
+
+		this.wrapper.on('change', '#filter-unit-type, #filter-floor', function () {
 			me.render_grid();
 		});
 
@@ -106,13 +135,26 @@ class HotelCalendar {
 	}
 
 	load_data() {
+		this.start_date = frappe.datetime.add_days(frappe.datetime.get_today(), -2);
 		frappe.call({
 			method: 'hotel_management.hotel_management.page.hotel_calendar.hotel_calendar.get_units',
 			callback: (r) => {
 				this.units = r.message || [];
+				this.populate_filters();
 				this.fetch_events();
 			}
 		});
+	}
+
+	populate_filters() {
+		let types = [...new Set(this.units.map(u => u.unit_type))];
+		let floors = [...new Set(this.units.map(u => u.floor))].sort();
+
+		let type_html = '<option value="">All Types</option>' + types.map(t => `<option value="${t}">${t}</option>`).join('');
+		let floor_html = '<option value="">All Floors</option>' + floors.map(f => `<option value="${f}">${f}</option>`).join('');
+
+		this.wrapper.find('#filter-unit-type').html(type_html);
+		this.wrapper.find('#filter-floor').html(floor_html);
 	}
 
 	fetch_events() {
@@ -136,14 +178,22 @@ class HotelCalendar {
 		container.empty();
 
 		let today = frappe.datetime.get_today();
-		let days = (this.view_mode === 'Week') ? 60 : (this.view_mode === 'Month' ? 90 : 30);
-		let cell_w = (this.view_mode === 'Week') ? "45px" : (this.view_mode === 'Month' ? "35px" : "55px");
+		let days = (this.view_mode === 'Week') ? 30 : (this.view_mode === 'Month' ? 90 : 14);
+		let cell_w = (this.view_mode === 'Month') ? "35px" : "55px";
 
 		let dates = [];
-		let start = frappe.datetime.add_days(today, -2);
+		let start = this.start_date || frappe.datetime.add_days(today, -2);
 		for (let i = 0; i < days; i++) {
 			dates.push(frappe.datetime.add_days(start, i));
 		}
+
+		// Apply filters
+		let filter_type = this.wrapper.find('#filter-unit-type').val();
+		let filter_floor = this.wrapper.find('#filter-floor').val();
+		let filtered_units = this.units.filter(u => {
+			return (!filter_type || u.unit_type === filter_type) &&
+				(!filter_floor || String(u.floor) === filter_floor);
+		});
 
 		let html = `<table class="table table-bordered" style="table-layout: fixed; width: auto; min-width: 100%; margin-bottom: 0;">
 			<thead>
@@ -161,7 +211,7 @@ class HotelCalendar {
 
 		html += `</tr></thead><tbody>`;
 
-		this.units.forEach(unit => {
+		filtered_units.forEach(unit => {
 			html += `<tr>`;
 			html += `<td style="position: sticky; left: 0; background: #fff; z-index: 20; font-weight: bold; border-right: 2px solid #ddd; cursor: pointer; color: var(--primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" 
 				onclick="frappe.set_route('Form', 'Property Unit', '${unit.name}')">
@@ -186,10 +236,10 @@ class HotelCalendar {
 					if (booking.status === 'Checked-Out') color = "#95a5a6";
 
 					// Format: Name (ID) or just ID
-					let display = (booking.display_label) ? `${booking.display_label} (${booking.id})` : booking.id;
+					let display = booking.guest_name ? `${booking.guest_name}` : booking.id;
 
 					html += `<td colspan="${span}" style="background-color: ${color}; color: white; border: 1px solid white; cursor: pointer; padding: 2px 5px; font-size: 10px; vertical-align: middle;" 
-							onclick="frappe.set_route('Form', 'Reservation', '${booking.id}')" title="${display}">
+							onclick="frappe.set_route('Form', 'Reservation', '${booking.id}')" title="${display} (${booking.id})">
 							<div style="overflow: hidden; white-space: nowrap; text-overflow: ellipsis;">${display}</div>
 						</td>`;
 				} else {
@@ -203,7 +253,7 @@ class HotelCalendar {
 		container.html(html);
 
 		// Highlight active view button
-		this.wrapper.find(`.view-modes button[data-view="${this.view_mode}"]`).addClass('active').siblings().removeClass('active');
+		this.wrapper.find(`.view-modes-navigation button[data-view="${this.view_mode}"]`).addClass('active').siblings().removeClass('active');
 	}
 
 	open_booking_form(unit, date) {

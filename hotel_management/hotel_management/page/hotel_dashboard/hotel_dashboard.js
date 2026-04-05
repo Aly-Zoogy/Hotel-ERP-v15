@@ -67,6 +67,20 @@ frappe.pages['hotel-dashboard'].on_page_load = function (wrapper) {
                 </div>
 
                 <div class="row">
+                    <!-- Pending Confirmation (Draft) -->
+                    <div class="col-sm-3">
+                        <div class="widget-box" data-widget="draft_reservations" style="background: white; border-radius: 8px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); border-left: 4px solid #95a5a6; cursor: pointer; margin-bottom: 20px; transition: transform 0.3s;">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <div>
+                                    <div style="font-size: 32px; font-weight: bold; color: #95a5a6;" class="widget-value">-</div>
+                                    <div style="font-size: 13px; color: #7f8c8d; font-weight: 500;">حجوزات بانتظار التأكيد</div>
+                                </div>
+                                <i class="octicon octicon-clock" style="font-size: 48px; color: #95a5a6; opacity: 0.3;"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                <div class="row">
                     <!-- Pending Tasks -->
                     <div class="col-sm-3">
                         <div class="widget-box" data-widget="pending_tasks" style="background: white; border-radius: 8px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); border-left: 4px solid #f39c12; cursor: pointer; transition: transform 0.3s;">
@@ -138,7 +152,7 @@ frappe.pages['hotel-dashboard'].on_page_load = function (wrapper) {
                     </div>
                     <div class="col-sm-3">
                         <a href="/app/hotel-calendar" class="btn btn-primary btn-block" style="margin-bottom: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-                            <i class="octicon octicon-calendar"></i> Hotel Calendar
+                            <i class="octicon octicon-calendar"></i> تقويم الفندق
                         </a>
                     </div>
                     <div class="col-sm-3">
@@ -171,6 +185,7 @@ frappe.pages['hotel-dashboard'].on_page_load = function (wrapper) {
     // Load dashboard data
     function loadDashboardData() {
         console.log('🚀 Loading dashboard data...');
+        $('#hotel-widgets .widget-value').html('<small>جاري العميل...</small>');
 
         frappe.call({
             method: 'hotel_management.hotel_management.dashboard_api.get_dashboard_data',
@@ -219,6 +234,11 @@ frappe.pages['hotel-dashboard'].on_page_load = function (wrapper) {
         // Revenue This Month
         $('[data-widget="revenue_this_month"] .widget-value').text(data.revenue_this_month.formatted);
 
+        // Draft Reservations
+        if (data.draft_reservations) {
+            $('[data-widget="draft_reservations"] .widget-value').text(data.draft_reservations.value);
+        }
+
         console.log('✅ Widgets updated');
     }
 
@@ -238,6 +258,12 @@ frappe.pages['hotel-dashboard'].on_page_load = function (wrapper) {
             frappe.set_route('List', 'Reservation', {
                 'check_out': frappe.datetime.get_today(),
                 'status': 'Checked-In'
+            });
+        });
+
+        $('[data-widget="draft_reservations"]').click(function () {
+            frappe.set_route('List', 'Reservation', {
+                'status': 'Draft'
             });
         });
 
@@ -265,7 +291,7 @@ frappe.pages['hotel-dashboard'].on_page_load = function (wrapper) {
         loadDashboardData();
         setupClickHandlers();
 
-        // Auto-refresh every 5 minutes
-        setInterval(loadDashboardData, 300000);
+        // Auto-refresh every 2 minutes
+        setInterval(loadDashboardData, 120000);
     }, 500);
 };

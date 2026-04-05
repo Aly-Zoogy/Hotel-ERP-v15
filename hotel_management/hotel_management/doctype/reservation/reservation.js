@@ -66,6 +66,191 @@ frappe.ui.form.on('Reservation', {
 				frappe.set_route('Form', 'Customer', frm.doc.customer);
 			});
 		}
+
+		// Request Deposit Button
+		if (frm.doc.docstatus < 2 && (frm.doc.status === "Draft" || frm.doc.status === "Confirmed")) {
+			frm.add_custom_button(__('Request Deposit'), function () {
+				frm.trigger('create_deposit_dialog');
+			}, __('Actions'));
+		}
+
+		// Sync Payment Button
+		if (frm.doc.docstatus === 1) {
+			frm.add_custom_button(__('Sync Payment'), function () {
+				frappe.call({
+					method: 'hotel_management.hotel_management.doctype.reservation.reservation.sync_reservation_payment',
+					args: {
+						reservation_name: frm.doc.name
+					},
+					callback: function (r) {
+						if (r.message) {
+							frm.reload_doc();
+							frappe.show_alert({ message: __('Payment synced'), indicator: 'green' });
+						}
+					}
+				});
+			}, __('Actions'));
+		}
+
+		// Extend Stay Button
+		if (frm.doc.status === "Checked-In") {
+			frm.add_custom_button(__('Extend Stay'), function () {
+				frm.trigger('extend_stay_dialog');
+			}, __('Actions'));
+
+			frm.add_custom_button(__('Change Room'), function () {
+				frm.trigger('change_room_dialog');
+			}, __('Actions'));
+		}
+	},
+
+	extend_stay_dialog: function (frm) {
+		let d = new frappe.ui.Dialog({
+			title: __('Extend Stay'),
+			fields: [
+				{
+					label: __('New Check-out Date'),
+					fieldname: 'new_checkout',
+					fieldtype: 'Date',
+					default: frappe.datetime.add_days(frm.doc.check_out, 1),
+					reqd: 1
+				}
+			],
+			primary_action_label: __('Extend'),
+			primary_action(values) {
+				frappe.call({
+					method: 'hotel_management.hotel_management.doctype.reservation.reservation.extend_stay',
+					args: {
+						reservation_name: frm.doc.name,
+						new_checkout: values.new_checkout
+					},
+					callback: function (r) {
+						if (r.message && r.message.success) {
+							frappe.show_alert({ message: r.message.message, indicator: 'green' });
+							d.hide();
+							frm.reload_doc();
+						}
+					}
+				});
+			}
+		});
+		d.show();
+	},
+
+	change_room_dialog: function (frm) {
+		// First, get currently occupied unit to allow user to pick which one to change (if multiple)
+		const units = frm.doc.units_reserved.map(u => u.unit);
+
+		let d = new frappe.ui.Dialog({
+			title: __('Change Room'),
+			fields: [
+				{
+					label: __('Current Room'),
+					fieldname: 'old_unit',
+					fieldtype: 'Select',
+					options: units,
+					default: units[0],
+					reqd: 1
+				},
+				{
+					label: __('New Room'),
+					fieldname: 'new_unit',
+					fieldtype: 'Link',
+					options: 'Property Unit',
+					get_query: function () {
+						return {
+							filters: {
+								'status': 'Available'
+							}
+						};
+					},
+					reqd: 1
+				},
+				{
+					label: __('Reason for Change'),
+					fieldname: 'reason',
+					fieldtype: 'Small Text',
+					reqd: 1
+				}
+			],
+			primary_action_label: __('Switch Room'),
+			primary_action(values) {
+				frappe.call({
+					method: 'hotel_management.hotel_management.doctype.reservation.reservation.change_room',
+					args: {
+						reservation_name: frm.doc.name,
+						old_unit: values.old_unit,
+						new_unit: values.new_unit,
+						reason: values.reason
+					},
+					callback: function (r) {
+						if (r.message && r.message.success) {
+							frappe.show_alert({ message: r.message.message, indicator: 'green' });
+							d.hide();
+							frm.reload_doc();
+						}
+					}
+				});
+			}
+		});
+		d.show();
+	},
+
+	create_deposit_dialog: function (frm) {
+		// Fetch Hotel Settings
+		frappe.db.get_single_value('Hotel Settings', 'deposit_percentage').then(pct => {
+			const default_pct = pct || 25;
+			const suggested_amount = flt(frm.doc.total_amount) * (default_pct / 100);
+
+			let d = new frappe.ui.Dialog({
+				title: __('Request Deposit'),
+				fields: [
+					{
+						label: __('Deposit Amount'),
+						fieldname: 'amount',
+						fieldtype: 'Currency',
+						default: suggested_amount,
+						reqd: 1
+					},
+					{
+						label: __('Payment Method'),
+						fieldname: 'method',
+						fieldtype: 'Select',
+						options: 'Cash\nCard\nBank Transfer\nOnline',
+						default: 'Online'
+					},
+					{
+						label: __('Reference'),
+						fieldname: 'reference',
+						fieldtype: 'Data'
+					}
+				],
+				primary_action_label: __('Create Deposit'),
+				primary_action(values) {
+					frappe.call({
+						method: 'frappe.client.insert',
+						args: {
+							doc: {
+								doctype: 'Hotel Deposit',
+								reservation: frm.doc.name,
+								deposit_amount: values.amount,
+								payment_method: values.method,
+								payment_reference: values.reference,
+								status: 'Pending'
+							}
+						},
+						callback: function (r) {
+							if (r.message) {
+								frappe.show_alert({ message: __('Deposit Request Created'), indicator: 'green' });
+								d.hide();
+								frappe.set_route('Form', 'Hotel Deposit', r.message.name);
+							}
+						}
+					});
+				}
+			});
+			d.show();
+		});
 	},
 
 	check_in: function (frm) {

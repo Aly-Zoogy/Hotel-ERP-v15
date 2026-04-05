@@ -24,7 +24,8 @@ def get_dashboard_data():
         "pending_tasks": get_pending_tasks_count(),
         "in_house_guests": get_in_house_guests(),
         "pending_settlements": get_pending_settlements(),
-        "revenue_this_month": get_revenue_this_month()
+        "revenue_this_month": get_revenue_this_month(),
+        "draft_reservations": get_draft_reservations()
     }
 
 @frappe.whitelist()
@@ -202,6 +203,20 @@ def get_pending_settlements():
     except Exception as e:
         frappe.log_error(frappe.get_traceback(), "Get Pending Settlements Failed")
         return {"value": 0, "label": _("Pending Settlements"), "color": "cyan"}
+
+@frappe.whitelist()
+def get_draft_reservations():
+    """Get count of draft reservations (pending confirmation)"""
+    try:
+        count = frappe.db.count("Reservation", {"status": "Draft", "docstatus": 0})
+        return {
+            "value": count,
+            "label": _("Draft Reservations"),
+            "color": "grey"
+        }
+    except Exception as e:
+        frappe.log_error(frappe.get_traceback(), "Get Draft Reservations Failed")
+        return {"value": 0, "label": _("Draft Reservations"), "color": "grey"}
 
 @frappe.whitelist()
 def get_revenue_this_month():

@@ -5,16 +5,24 @@
     "creation": "2025-11-07 13:00:00.000000",
     "doctype": "DocType",
     "title_field": "guest_name",
-    "search_fields": "guest_name,phone",
+    "search_fields": "guest_name,phone,email",
     "editable_grid": 1,
     "engine": "InnoDB",
     "field_order": [
         "guest_name",
         "customer",
+        "date_of_birth",
+        "nationality",
+        "vip_tier",
         "column_break_1",
-        "national_id",
+        "document_type",
+        "document_number",
+        "document_expiry",
         "phone",
         "email",
+        "section_break_preferences",
+        "dietary_preferences",
+        "room_preferences",
         "section_break_stats",
         "total_visits",
         "lifetime_revenue",
@@ -39,14 +47,45 @@
             "read_only": 1
         },
         {
+            "fieldname": "date_of_birth",
+            "fieldtype": "Date",
+            "label": "Date of Birth"
+        },
+        {
+            "fieldname": "nationality",
+            "fieldtype": "Link",
+            "label": "Nationality",
+            "options": "Country"
+        },
+        {
+            "fieldname": "vip_tier",
+            "fieldtype": "Select",
+            "label": "VIP Tier",
+            "options": "Regular\nSilver\nGold\nPlatinum",
+            "default": "Regular",
+            "in_list_view": 1
+        },
+        {
             "fieldname": "column_break_1",
             "fieldtype": "Column Break"
         },
         {
-            "fieldname": "national_id",
+            "fieldname": "document_type",
+            "fieldtype": "Select",
+            "label": "Document Type",
+            "options": "Passport\nEmirates ID\nDriver License\nOther",
+            "default": "Passport"
+        },
+        {
+            "fieldname": "document_number",
             "fieldtype": "Data",
-            "label": "National ID / Passport",
+            "label": "Document Number",
             "unique": 1
+        },
+        {
+            "fieldname": "document_expiry",
+            "fieldtype": "Date",
+            "label": "Document Expiry Date"
         },
         {
             "fieldname": "phone",
@@ -59,6 +98,21 @@
             "fieldname": "email",
             "fieldtype": "Data",
             "label": "Email"
+        },
+        {
+            "fieldname": "section_break_preferences",
+            "fieldtype": "Section Break",
+            "label": "Preferences"
+        },
+        {
+            "fieldname": "dietary_preferences",
+            "fieldtype": "Small Text",
+            "label": "Dietary Preferences"
+        },
+        {
+            "fieldname": "room_preferences",
+            "fieldtype": "Small Text",
+            "label": "Room Preferences"
         },
         {
             "fieldname": "section_break_stats",
@@ -118,7 +172,7 @@
         },
         {
             "create": 1,
-            "delete": 1,
+            "delete": 0,
             "email": 1,
             "export": 1,
             "print": 1,
@@ -127,6 +181,15 @@
             "role": "Front Desk",
             "share": 1,
             "write": 1
+        },
+        {
+            "email": 1,
+            "export": 1,
+            "print": 1,
+            "read": 1,
+            "report": 1,
+            "role": "Night Auditor",
+            "share": 1
         },
         {
             "email": 1,

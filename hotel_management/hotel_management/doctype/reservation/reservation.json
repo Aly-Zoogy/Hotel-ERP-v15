@@ -24,9 +24,12 @@
         "section_break_status",
         "status",
         "rate_plan",
+        "cancellation_policy",
         "sales_invoice",
         "column_break_2",
         "total_amount",
+        "amount_paid",
+        "balance_due",
         "payment_status",
         "section_break_notes",
         "notes"
@@ -134,10 +137,24 @@
             "default": "Draft"
         },
         {
+            "fieldname": "payment_status",
+            "fieldtype": "Select",
+            "label": "Payment Status",
+            "options": "Unpaid\nPartially Paid\nPaid",
+            "default": "Unpaid",
+            "read_only": 1
+        },
+        {
             "fieldname": "rate_plan",
             "fieldtype": "Link",
             "label": "Rate Plan",
             "options": "Rate Plan"
+        },
+        {
+            "fieldname": "cancellation_policy",
+            "fieldtype": "Link",
+            "label": "Cancellation Policy",
+            "options": "Hotel Cancellation Policy"
         },
         {
             "fieldname": "sales_invoice",
@@ -157,11 +174,16 @@
             "read_only": 1
         },
         {
-            "fieldname": "payment_status",
-            "fieldtype": "Select",
-            "label": "Payment Status",
-            "options": "Unpaid\nPartially Paid\nPaid",
-            "default": "Unpaid"
+            "fieldname": "amount_paid",
+            "fieldtype": "Currency",
+            "label": "Amount Paid",
+            "read_only": 1
+        },
+        {
+            "fieldname": "balance_due",
+            "fieldtype": "Currency",
+            "label": "Balance Due",
+            "read_only": 1
         },
         {
             "fieldname": "section_break_notes",
@@ -200,7 +222,7 @@
         },
         {
             "create": 1,
-            "delete": 1,
+            "delete": 0,
             "email": 1,
             "export": 1,
             "print": 1,
@@ -210,6 +232,15 @@
             "share": 1,
             "submit": 1,
             "write": 1
+        },
+        {
+            "email": 1,
+            "export": 1,
+            "print": 1,
+            "read": 1,
+            "report": 1,
+            "role": "Night Auditor",
+            "share": 1
         },
         {
             "email": 1,

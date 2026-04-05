@@ -32,11 +32,49 @@ class Reservation(Document):
 		self.db_set('status', 'Cancelled')
 		self.update_unit_statuses("Available")
 		
+		# Calculate Refund/Penalty
+		refund_data = self.calculate_cancellation_refund()
+		if refund_data and refund_data.get("refund_amount") > 0:
+			frappe.msgprint(_("Cancellation Refund of {0} is due. Penalty: {1}")
+				.format(refund_data["refund_amount"], refund_data["penalty_amount"]))
+		
 		# Cancel linked invoice if exists
 		if self.sales_invoice:
 			invoice = frappe.get_doc("Sales Invoice", self.sales_invoice)
 			if invoice.docstatus == 1:
 				invoice.cancel()
+
+	def calculate_cancellation_refund(self):
+		"""Calculate refund amount based on cancellation policy"""
+		if self.status != "Confirmed":
+			return None
+		
+		# Get Policy
+		policy_name = self.cancellation_policy or frappe.db.get_single_value("Hotel Settings", "default_cancellation_policy")
+		if not policy_name:
+			# Fallback: full refund if no policy
+			return {"refund_amount": self.amount_paid, "penalty_amount": 0}
+		
+		policy = frappe.get_doc("Hotel Cancellation Policy", policy_name)
+		days_to_arrival = date_diff(self.check_in, today())
+		
+		refund_pct = 100
+		penalty_pct = 0
+		
+		for tier in policy.tiers:
+			if days_to_arrival >= tier.days_before_checkin_from and days_to_arrival <= (tier.days_before_checkin_to or 9999):
+				refund_pct = tier.refund_percentage
+				penalty_pct = tier.penalty_percentage
+				break
+		
+		refund_amount = flt(self.amount_paid) * (flt(refund_pct) / 100)
+		penalty_amount = flt(self.amount_paid) * (flt(penalty_pct) / 100)
+		
+		return {
+			"refund_amount": refund_amount,
+			"penalty_amount": penalty_amount,
+			"days_to_arrival": days_to_arrival
+		}
 	
 	def validate_dates(self):
 		"""Ensure check-out is after check-in"""
@@ -232,6 +270,42 @@ class Reservation(Document):
 				total += service.amount
 		
 		self.total_amount = total
+		
+		# Calculate Payment details if invoice exists
+		self.calculate_payment_details()
+
+	def calculate_payment_details(self):
+		"""Calculate paid amount and balance from linked Sales Invoice and Deposits"""
+		paid_amount = 0
+		
+		# 1. Sum up from Sales Invoice
+		if self.sales_invoice:
+			invoice_data = frappe.db.get_value("Sales Invoice", self.sales_invoice, 
+				["outstanding_amount", "grand_total"], as_dict=1)
+			if invoice_data:
+				paid_amount += flt(invoice_data.grand_total) - flt(invoice_data.outstanding_amount)
+		
+		# 2. Sum up from Hotel Deposits (that are not yet linked to Sales Invoice / separate)
+		# NOTE: If deposits are linked to Sales Invoice via Payment Entry in ERPNext, 
+		# we should be careful not to double count.
+		# For now, we assume Deposits are separate pre-payments.
+		deposits = frappe.get_all("Hotel Deposit", 
+			filters={"reservation": self.name, "docstatus": 1, "status": "Paid"},
+			fields=["deposit_amount"])
+		
+		for dep in deposits:
+			paid_amount += flt(dep.deposit_amount)
+
+		self.amount_paid = paid_amount
+		self.balance_due = flt(self.total_amount) - flt(self.amount_paid)
+		
+		# Update payment status
+		if self.balance_due <= 0 and self.amount_paid > 0:
+			self.payment_status = "Paid"
+		elif self.amount_paid > 0:
+			self.payment_status = "Partially Paid"
+		else:
+			self.payment_status = "Unpaid"
 	
 	def update_unit_statuses(self, status):
 		"""Update status of all reserved units"""
@@ -359,6 +433,90 @@ class Reservation(Document):
 			task.insert(ignore_permissions=True)
 
 # ✅ SOLUTION: Whitelisted wrapper functions outside class
+	def perform_stay_extension(self, new_checkout):
+		"""Extend the stay of a checked-in reservation"""
+		if self.status != "Checked-In":
+			frappe.throw(_("Can only extend stay for Checked-In reservations"))
+		
+		old_checkout = self.check_out
+		if getdate(new_checkout) <= getdate(old_checkout):
+			frappe.throw(_("New check-out date must be after current check-out date ({0})").format(old_checkout))
+		
+		# Check availability for the extra period for each unit
+		for unit in self.units_reserved:
+			if not self.is_unit_available(unit.unit, old_checkout, new_checkout):
+				frappe.throw(_("Unit {0} is not available for the extended period").format(unit.unit))
+		
+		# Update dates using db_set to bypass submit field lock (check_out may not be in allow_on_submit)
+		self.db_set('check_out', new_checkout, update_modified=False)
+		
+		# Update each reserved unit row to reflect new nights
+		new_nights = date_diff(new_checkout, self.check_in)
+		for unit in self.units_reserved:
+			unit.check_out = new_checkout
+			unit.qty_nights = new_nights
+			unit.total_amount = flt(unit.rate_per_night) * flt(unit.qty_nights)
+			# Update the row in database
+			frappe.db.set_value("Reservation Unit", unit.name, {
+				"check_out": new_checkout,
+				"qty_nights": new_nights,
+				"total_amount": unit.total_amount
+			}, update_modified=False)
+
+		self.calculate_nights()
+		self.calculate_total_amount() # This will re-sum unit totals and update self.total_amount
+		# Use db_update to persist calculated total_amount field
+		self.db_update()
+		
+		return True
+
+	def perform_room_change(self, old_unit_name, new_unit_name, reason):
+		"""Change the room for a checked-in reservation"""
+		if self.status != "Checked-In":
+			frappe.throw(_("Can only change rooms for Checked-In reservations"))
+		
+		# Check if new unit is available for remaining stay
+		if not self.is_unit_available(new_unit_name, today(), self.check_out):
+			frappe.throw(_("New unit {0} is not available for the remaining stay").format(new_unit_name))
+		
+		# Update units_reserved table
+		found = False
+		for unit in self.units_reserved:
+			if unit.unit == old_unit_name:
+				unit.unit = new_unit_name
+				found = True
+				break
+		
+		if not found:
+			frappe.throw(_("Old unit {0} not found in this reservation").format(old_unit_name))
+		
+		# Update statuses
+		frappe.db.set_value("Property Unit", old_unit_name, "status", "Cleaning")
+		frappe.db.set_value("Property Unit", new_unit_name, "status", "Occupied")
+		
+		# Add internal note
+		note = _("\nRoom changed from {0} to {1} on {2}. Reason: {3}").format(
+			old_unit_name, new_unit_name, today(), reason
+		)
+		self.notes = (self.notes or "") + note
+		
+		self.calculate_total_amount() # Re-calculate if rates differ
+		self.save()
+		
+		return True
+
+@frappe.whitelist()
+def extend_stay(reservation_name, new_checkout):
+	doc = frappe.get_doc("Reservation", reservation_name)
+	doc.perform_stay_extension(new_checkout)
+	return {"success": True, "message": _("Stay extended until {0}").format(new_checkout)}
+
+@frappe.whitelist()
+def change_room(reservation_name, old_unit, new_unit, reason):
+	doc = frappe.get_doc("Reservation", reservation_name)
+	doc.perform_room_change(old_unit, new_unit, reason)
+	return {"success": True, "message": _("Room changed from {0} to {1}").format(old_unit, new_unit)}
+
 @frappe.whitelist()
 def check_in_reservation(reservation_name):
 	"""
@@ -437,6 +595,18 @@ def get_available_units(property=None, unit_type=None, check_in=None, check_out=
 	
 	return available
 
+@frappe.whitelist()
+def sync_reservation_payment(reservation_name):
+	"""Sync payment details for a reservation"""
+	doc = frappe.get_doc("Reservation", reservation_name)
+	doc.calculate_payment_details()
+	doc.db_update()
+	return {
+		"amount_paid": doc.amount_paid,
+		"balance_due": doc.balance_due,
+		"payment_status": doc.payment_status
+	}
+
 def update_guest_statistics(guest_id):
 	"""Update guest statistics after checkout"""
 	try:
@@ -444,3 +614,18 @@ def update_guest_statistics(guest_id):
 		update_stats(guest_id)
 	except Exception as e:
 		frappe.log_error(frappe.get_traceback(), "Update Guest Statistics Failed")
+
+def sync_from_invoice(doc, method=None):
+	"""Sync reservation payment from linked Sales Invoice event"""
+	reservation = frappe.db.get_value("Reservation", {"sales_invoice": doc.name}, "name")
+	if reservation:
+		sync_reservation_payment(reservation)
+
+def sync_from_payment(doc, method=None):
+	"""Sync reservation payment from Payment Entry event"""
+	# Check if any linked Sales Invoice is connected to a Reservation
+	for ref in doc.get("references", []):
+		if ref.reference_doctype == "Sales Invoice":
+			reservation = frappe.db.get_value("Reservation", {"sales_invoice": ref.reference_name}, "name")
+			if reservation:
+				sync_reservation_payment(reservation)

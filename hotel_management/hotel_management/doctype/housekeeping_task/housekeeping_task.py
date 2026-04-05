@@ -36,9 +36,11 @@ class HousekeepingTask(Document):
 			from frappe.utils import now_datetime
 			self.completion_time = now_datetime().strftime("%H:%M:%S")
 		
-		# Update unit status to Available
-		frappe.db.set_value("Property Unit", self.property_unit, "status", "Available")
-		frappe.msgprint(_("Unit {0} is now Available").format(self.property_unit))
+		# Update unit status to Available only if it was Cleaning
+		current_status = frappe.db.get_value("Property Unit", self.property_unit, "status")
+		if self.task_type == "Cleaning" and current_status == "Cleaning":
+			frappe.db.set_value("Property Unit", self.property_unit, "status", "Available")
+			frappe.msgprint(_("Unit {0} is now Available").format(self.property_unit))
 
 @frappe.whitelist()
 def mark_task_completed(task_name):

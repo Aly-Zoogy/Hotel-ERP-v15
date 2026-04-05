@@ -1,0 +1,51 @@
+{
+    "actions": [],
+    "allow_rename": 1,
+    "creation": "2026-02-27 13:30:00.000000",
+    "doctype": "DocType",
+    "editable_grid": 1,
+    "engine": "InnoDB",
+    "field_order": [
+        "days_before_checkin_from",
+        "days_before_checkin_to",
+        "refund_percentage",
+        "penalty_percentage"
+    ],
+    "fields": [
+        {
+            "fieldname": "days_before_checkin_from",
+            "fieldtype": "Int",
+            "label": "Days Before Check-in (From)",
+            "reqd": 1
+        },
+        {
+            "fieldname": "days_before_checkin_to",
+            "fieldtype": "Int",
+            "label": "Days Before Check-in (To)",
+            "reqd": 1
+        },
+        {
+            "fieldname": "refund_percentage",
+            "fieldtype": "Percent",
+            "label": "Refund Percentage",
+            "default": "100"
+        },
+        {
+            "fieldname": "penalty_percentage",
+            "fieldtype": "Percent",
+            "label": "Penalty Percentage",
+            "default": "0"
+        }
+    ],
+    "index_web_pages_for_search": 1,
+    "istable": 1,
+    "modified": "2026-02-27 13:30:00.000000",
+    "modified_by": "Administrator",
+    "module": "Hotel Management",
+    "name": "Cancellation Policy Tier",
+    "owner": "Administrator",
+    "permissions": [],
+    "sort_field": "modified",
+    "sort_order": "DESC",
+    "states": []
+}

@@ -1,0 +1,166 @@
+{
+    "actions": [],
+    "allow_rename": 1,
+    "autoname": "format:DEP-{YYYY}-{#####}",
+    "creation": "2026-02-27 13:00:00.000000",
+    "doctype": "DocType",
+    "engine": "InnoDB",
+    "field_order": [
+        "reservation",
+        "customer",
+        "deposit_amount",
+        "column_break_1",
+        "payment_method",
+        "payment_date",
+        "payment_reference",
+        "status",
+        "section_break_refund",
+        "refund_amount",
+        "refund_date",
+        "refund_reason",
+        "amended_from"
+    ],
+    "fields": [
+        {
+            "fieldname": "reservation",
+            "fieldtype": "Link",
+            "in_list_view": 1,
+            "label": "Reservation",
+            "options": "Reservation",
+            "reqd": 1
+        },
+        {
+            "fetch_from": "reservation.customer",
+            "fieldname": "customer",
+            "fieldtype": "Link",
+            "in_list_view": 1,
+            "label": "Customer",
+            "options": "Customer",
+            "read_only": 1
+        },
+        {
+            "fieldname": "deposit_amount",
+            "fieldtype": "Currency",
+            "in_list_view": 1,
+            "label": "Deposit Amount",
+            "reqd": 1
+        },
+        {
+            "fieldname": "column_break_1",
+            "fieldtype": "Column Break"
+        },
+        {
+            "fieldname": "payment_method",
+            "fieldtype": "Select",
+            "label": "Payment Method",
+            "options": "Cash\nCard\nBank Transfer\nOnline",
+            "default": "Cash"
+        },
+        {
+            "fieldname": "payment_date",
+            "fieldtype": "Date",
+            "label": "Payment Date",
+            "default": "Today"
+        },
+        {
+            "fieldname": "payment_reference",
+            "fieldtype": "Data",
+            "label": "Payment Reference"
+        },
+        {
+            "fieldname": "status",
+            "fieldtype": "Select",
+            "in_list_view": 1,
+            "label": "Status",
+            "options": "Pending\nPaid\nRefunded\nForfeited",
+            "default": "Pending"
+        },
+        {
+            "fieldname": "section_break_refund",
+            "fieldtype": "Section Break",
+            "label": "Refund Details"
+        },
+        {
+            "fieldname": "refund_amount",
+            "fieldtype": "Currency",
+            "label": "Refund Amount"
+        },
+        {
+            "fieldname": "refund_date",
+            "fieldtype": "Date",
+            "label": "Refund Date"
+        },
+        {
+            "fieldname": "refund_reason",
+            "fieldtype": "Small Text",
+            "label": "Refund Reason"
+        },
+        {
+            "fieldname": "amended_from",
+            "fieldtype": "Link",
+            "label": "Amended From",
+            "no_copy": 1,
+            "options": "Hotel Deposit",
+            "print_hide": 1,
+            "read_only": 1
+        }
+    ],
+    "index_web_pages_for_search": 1,
+    "is_submittable": 1,
+    "modified": "2026-02-27 13:00:00.000000",
+    "modified_by": "Administrator",
+    "module": "Hotel Management",
+    "name": "Hotel Deposit",
+    "naming_rule": "Expression",
+    "owner": "Administrator",
+    "permissions": [
+        {
+            "create": 1,
+            "delete": 1,
+            "email": 1,
+            "export": 1,
+            "print": 1,
+            "read": 1,
+            "report": 1,
+            "role": "System Manager",
+            "share": 1,
+            "write": 1,
+            "submit": 1,
+            "cancel": 1,
+            "amend": 1
+        },
+        {
+            "create": 1,
+            "delete": 1,
+            "email": 1,
+            "export": 1,
+            "print": 1,
+            "read": 1,
+            "report": 1,
+            "role": "Front Desk",
+            "share": 1,
+            "write": 1,
+            "submit": 1,
+            "cancel": 1
+        },
+        {
+            "create": 1,
+            "delete": 1,
+            "email": 1,
+            "export": 1,
+            "print": 1,
+            "read": 1,
+            "report": 1,
+            "role": "Hotel Manager",
+            "share": 1,
+            "write": 1,
+            "submit": 1,
+            "cancel": 1,
+            "amend": 1
+        }
+    ],
+    "sort_field": "modified",
+    "sort_order": "DESC",
+    "states": [],
+    "track_changes": 1
+}
